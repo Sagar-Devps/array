@@ -36,6 +36,7 @@ function create2DMatrix() {
                                     if (!isNaN(searchNumber)) {
                                         searchNumberInMatrices(searchNumber, matricesArray);
                                         searchNumberInLinearArray(searchNumber, matricesArray);
+                                        displayMatrices(matricesArray);
                                         rl.close();
                                     } else {
                                         console.log('Invalid input. Please enter a valid number.');
@@ -74,7 +75,16 @@ function create2DMatrix() {
             console.log(`Number ${searchNumber} not found in matrices.`);
         }
     }
-
+    function displayMatrices(matricesArray) {
+        console.log("Matrices:");
+        matricesArray.forEach((matrix, index) => {
+            console.log(`Matrix ${index + 1}:`);
+            matrix.forEach(row => {
+                console.log(row.join('\t'));
+            });
+            console.log(); // Add a new line for better separation
+        });
+    }
     function searchNumberInLinearArray(searchNumber, matricesArray) {
         let found = false;
 
