@@ -84,13 +84,13 @@ function addNewMatrix() {
                         } else if (i < 1) {
                             askForElement(i + 1, 0);
                         } else {
-                            // Add the new matrix to both the matrices array and the linear array
-                            matrices.push([...matrix]);
-                            linearArray.matrices.push({ ...matrix, parentId: id });
+                            // Add the new matrix to the temporary array
+                            matrices.push(matrix.map(row => [...row]));
 
                             // Reset the matrix for the next iteration
                             matrix = [[0, 0], [0, 0]];
 
+                            // Check if the user wants to add another matrix
                             rl.question('Do you want to add another matrix? (y/n): ', handleResponse);
                         }
                     } else {
@@ -108,54 +108,97 @@ function addNewMatrix() {
         askForElement(0, 0);
     }
 
+    // Function to handle the response
+    function handleResponse(response) {
+        if (response.trim().toLowerCase() === 'y') {
+            // If the user wants to add another matrix, continue adding
+            addMatrix();
+        } else {
+            // If the user is done, push the collected matrices into linearArray.matrices
+            linearArray.matrices = matrices;
+
+            // Save the linear array to local storage
+            matricesArray.push(linearArray);
+            saveToLocalStorage();
+
+            // Display the result
+            displayResult();
+
+            // Close the readline interface
+            rl.close();
+        }
+    }
+
+    // Function to display the result
+    function displayResult() {
+        console.log(`Array ID ${linearArray.id}:`);
+        console.log('Matrices:');
+        for (let i = 0; i < matrices.length; i++) {
+            console.log(`Matrix ${i + 1}:`);
+            for (let row of matrices[i]) {
+                console.log(row.join('\t'));
+            }
+            console.log();
+        }
+
+        console.log('Linear Array:');
+        console.log(JSON.stringify(linearArray));
+    }
+
     // Start adding the first matrix
     addMatrix();
+    
 }
-
-
-
 
 
 
 
 function displayMatricesAndArrays() {
     console.log("All Matrices and Linear Arrays:");
-    matricesArray.forEach((matrixObj) => {
-        console.log(`Array ID ${matrixObj.id}:`);
+
+    matricesArray.forEach((linearArray) => {
+        console.log(`Linear Array ID ${linearArray.id}:`);
 
         // Display matrices
         console.log("Matrices:");
-        matrixObj.matrices.forEach((matrix, index) => {
+        linearArray.matrices.forEach((matrix, index) => {
             console.log(`Matrix ${index + 1}:`);
             matrix.forEach(row => {
                 console.log(row.join('\t'));
             });
+          
             console.log(); // Add a new line for better separation
         });
+          // show respec linear array
+          console.log('Array Format:');
+          const linearArrayCopy = {
+            id: linearArray.id,
+            matrices: linearArray.matrices.map(matrix => matrix.map(row => [...row]))
+        };
+          console.log(JSON.stringify(linearArrayCopy).replace(/\n|\r/g, ''));
+    
 
-
-
-
-        // // Display linear array
-        console.log("Linear Array:");
-        console.log(JSON.stringify(matrixObj.linearArray));
-        
         console.log(); // Add a new line for better separation
     });
 
     create2DMatrix();
 }
+
+
 
 function showAllLinearArrays() {
     console.log("All Linear Arrays:");
 
-    matricesArray.forEach((matrixObj) => {
-        console.log(`Linear Array ID ${matrixObj.id}:`);
+    matricesArray.forEach((linearArray) => {
+        console.log(`Linear Array ID ${linearArray.id}:`);
 
-        const linearArray = matrixObj.matrices.map(matrix => matrix.map(row => [...row]));
+        const linearArrayCopy = {
+            id: linearArray.id,
+            matrices: linearArray.matrices.map(matrix => matrix.map(row => [...row]))
+        };
 
         console.log('Array Format:');
-        console.log(JSON.stringify(linearArray, null, 2).replace(/\n|\r/g, ''));
+        console.log(JSON.stringify(linearArrayCopy, null, 2).replace(/\n|\r/g, ''));
 
         console.log(); // Add a new line for better separation
     });
@@ -167,19 +210,6 @@ function showAllLinearArrays() {
 
 
 
-// function showIndividualLinearArray() {
-//     rl.question('Enter the linear array ID to display: ', (id) => {
-//         id = parseInt(id);
-//         const matrixObj = matricesArray.find(obj => obj.id === id);
-//         if (matrixObj) {
-//             const linearArr = matrixObj.matrices;
-//             console.log(`Linear Array ID ${id}: [${linearArr.map(arr => arr.id).join(', ')}]`);
-//         } else {
-//             console.log('Linear Array not found. Please enter a valid linear array ID.');
-//         }
-//         create2DMatrix();
-//     });
-// }
 
 function selectIndividualArray() {
     rl.question('Enter the linear array ID to view: ', (id) => {
@@ -192,12 +222,24 @@ function selectIndividualArray() {
                 console.log(`Matrix ${index + 1}:`);
                 matrix.forEach(row => {
                     console.log(row.join('\t'));
+                    // show respective linear array
+  
                 });
-                console.log(); // Add a new line for better separation
+                console.log(); 
+                // Add a new line for better separation
             });
         } else {
             console.log('Linear Array not found. Please enter a valid linear array ID.');
         }
+        // show the resp id linear array
+        console.log('Array Format:');
+        const matrixObjCopy = {
+            id: matrixObj.id,
+            matrices: matrixObj.matrices.map(matrix => matrix.map(row => [...row]))
+        };
+        console.log(JSON.stringify(matrixObjCopy, null, 2).replace(/\n|\r/g, ''));
+        console.log(); // Add a new line for better separation
+
         create2DMatrix();
     });
 }
@@ -251,36 +293,58 @@ function addMatrixToLinearArray() {
 }
 
 function searchElement() {
+
     rl.question('Enter a number to search: ', (searchNumber) => {
         searchNumber = parseInt(searchNumber);
 
         if (!isNaN(searchNumber)) {
+            // Retrieve matricesArray from local storage
+            const matricesArray = localStorage.getItem('matricesArray') ? JSON.parse(localStorage.getItem('matricesArray')) : [];
+
             let found = false;
 
-            for (let i = 0; i < matricesArray.length; i++) {
-                const matrixArray = matricesArray[i].matrices;
-                for (let j = 0; j < matrixArray.length; j++) {
-                    const matrix = matrixArray[j];
-                    for (let row = 0; row < matrix.length; row++) {
-                        for (let col = 0; col < matrix[row].length; col++) {
-                            if (matrix[row][col] === searchNumber) {
-                                console.log(`Number ${searchNumber} found in matrix at position (${row + 1}, ${col + 1}) of linear array ID ${matricesArray[i].id}, matrix ${j + 1}.`);
+            // Search every matrix in every linear array
+            matricesArray.forEach((linearArray) => {
+                const matrixArray = linearArray.matrices;
+                let linearArrayPosition = 0;
+
+                matrixArray.forEach((matrix, matrixIndex) => {
+                    matrix.forEach((row, rowIndex) => {
+                        row.forEach((element, colIndex) => {
+                            if (element === searchNumber) {
+                                // Calculate linear array position
+                                linearArrayPosition = (matrixIndex * matrix.length + rowIndex) * row.length + colIndex + 1;
+
+                               
+                                // Display the searched element in the matrix
+                                console.log(`Matrix ${matrixIndex + 1}:`);
+                                matrix.forEach(row => {
+                                    console.log(row.join('\t'));
+                                });
+                                console.log(); // Add a new line for better separation
+                                console.log('Array Format:');
+                                const linearArrayCopy = {
+                                    id: linearArray.id,
+                                    matrices: linearArray.matrices.map(matrix => matrix.map(row => [...row]))
+                                };
+                                console.log(JSON.stringify(linearArrayCopy).replace(/\n|\r/g, ''));
+                                // Display the position in linear array
+                                console.log(`Position in Linear Array: Linear Array ID ${linearArray.id}, Matrix ${matrixIndex + 1}, Element Index: ${linearArrayPosition}.`);
+                                console.log(); // Add a new line for better separation
+                               
                                 found = true;
                             }
-                        }
-                    }
-                }
-            }
+                        });
+                    });
+                });
+            });
 
             if (!found) {
-                console.log(`Number ${searchNumber} not found in matrices.`);
+                console.log(`Number ${searchNumber} not found in any matrices.`);
             }
         } else {
             console.log('Invalid input. Please enter a valid number.');
         }
-
-        // Display all matrices after the search
-        displayMatrices(matricesArray);
 
         create2DMatrix();
     });
@@ -288,19 +352,16 @@ function searchElement() {
 
 
 
-
-
-function displayMatrices(matricesArray) {
-    console.log("Matrices:");
-    matricesArray.forEach((matrixObj) => {
-        const matrix = matrixObj.matrix;
-        console.log(`Array ID ${matrixObj.id}:`);
-        matrix.forEach(row => {
-            console.log(row.join('\t'));
-        });
-        console.log(); // Add a new line for better separation
-    });
-}
+//     console.log("Matrices:");
+//     matricesArray.forEach((matrixObj) => {
+//         const matrix = matrixObj.matrix;
+//         console.log(`Array ID ${matrixObj.id}:`);
+//         matrix.forEach(row => {
+//             console.log(row.join('\t'));
+//         });
+//         console.log(); // Add a new line for better separation
+//     });
+// }
 
 
 // Start the program
