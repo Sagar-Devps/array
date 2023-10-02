@@ -1,70 +1,8 @@
-const readline = require('readline');
-const LocalStorage = require('node-localstorage').LocalStorage;
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-const fs = require('fs');
 
-const localStorage = new LocalStorage('./scratch');
-let matricesArray = [];
-let lastUsedId = 0;
+    const outputContainer = document.getElementById('outputContainer');
 
-function saveToLocalStorage() {
-    const matricesArrayJSON = JSON.stringify(matricesArray);
-    localStorage.setItem('matricesArray', matricesArrayJSON);
-    localStorage.setItem('lastUsedId', lastUsedId.toString());
-}
-
-function loadFromLocalStorage() {
-    const matricesArrayJSON = localStorage.getItem('matricesArray');
-    if (matricesArrayJSON) {
-        matricesArray = JSON.parse(matricesArrayJSON);
-    }
-
-    const lastUsedIdString = localStorage.getItem('lastUsedId');
-    lastUsedId = lastUsedIdString ? parseInt(lastUsedIdString) : 0;
-}
-
-// Load matricesArray and lastUsedId from local storage on program start
-loadFromLocalStorage();
-
-// Function to create a 2x2 matrix and store in a linear array
-function create2DMatrix() {
-    rl.question('1. Add a new matrix\n2. Show all matrices and linear arrays\n3. Show all linear arrays\n4. Show individual array\n5. Add matrices to a specified array\n6. Search matrices\n7. Exit\nEnter your choice: ', (choice) => {
-        switch (parseInt(choice)) {
-            case 1:
-                addNewMatrix();
-                break;
-            case 2:
-                displayMatricesAndArrays();
-                break;
-            case 3:
-                showAllLinearArrays();
-                break;
-            case 4:
-                selectIndividualArray();
-                break;
-            case 5:
-                addMatrixToLinearArray();
-                break;
-            case 6:
-                searchElement();
-                break;
-            case 7:
-                saveToLocalStorage(); // Save to local storage before exiting
-                rl.close();
-                break;
-            default:
-                console.log('Invalid choice. Please enter a valid option.');
-                create2DMatrix();
-                break;
-        }
-    });
-}
-
-function addNewMatrix() {
+    function addNewMatrix() {
     const id = ++lastUsedId; // Increment the ID
     let matrices = [];
     let linearArray = { id, matrices: [] }; // Linear array with parent ID
@@ -73,35 +11,43 @@ function addNewMatrix() {
         let matrix = [[0, 0], [0, 0]];
 
         function askForElement(i, j) {
-            rl.question(`Enter element at position (${i + 1}, ${j + 1}): `, (answer) => {
-                try {
-                    const element = parseInt(answer.trim());
-                    if (!isNaN(element)) {
-                        matrix[i][j] = element;
+            const answer = prompt(`Enter element at position (${i + 1}, ${j + 1}):`);
 
-                        if (j < 1) {
-                            askForElement(i, j + 1);
-                        } else if (i < 1) {
-                            askForElement(i + 1, 0);
-                        } else {
-                            // Add the new matrix to the temporary array
-                            matrices.push(matrix.map(row => [...row]));
+            if (answer === null) {
+                // User clicked "Cancel"
+                alert('Matrix creation canceled.');
+                create2DMatrix();
+                return;
+            }
 
-                            // Reset the matrix for the next iteration
-                            matrix = [[0, 0], [0, 0]];
+            try {
+                const element = parseInt(answer.trim());
+                if (!isNaN(element)) {
+                    matrix[i][j] = element;
 
-                            // Check if the user wants to add another matrix
-                            rl.question('Do you want to add another matrix? (y/n): ', handleResponse);
-                        }
+                    if (j < 1) {
+                        askForElement(i, j + 1);
+                    } else if (i < 1) {
+                        askForElement(i + 1, 0);
                     } else {
-                        console.log("Invalid input. Please enter a valid number.");
-                        askForElement(i, j);
+                        // Add the new matrix to the temporary array
+                        matrices.push(matrix.map(row => [...row]));
+
+                        // Reset the matrix for the next iteration
+                        matrix = [[0, 0], [0, 0]];
+
+                        // Check if the user wants to add another matrix
+                        const response = prompt('Do you want to add another matrix? (y/n):');
+                        handleResponse(response);
                     }
-                } catch (error) {
-                    console.log("Error parsing input. Please enter a valid number.");
+                } else {
+                    alert("Invalid input. Please enter a valid number.");
                     askForElement(i, j);
                 }
-            });
+            } catch (error) {
+                alert("Error parsing input. Please enter a valid number.");
+                askForElement(i, j);
+            }
         }
 
         // Start asking for elements
@@ -110,6 +56,13 @@ function addNewMatrix() {
 
     // Function to handle the response
     function handleResponse(response) {
+        if (response === null) {
+            // User clicked "Cancel"
+            alert('Matrix creation canceled.');
+            create2DMatrix();
+            return;
+        }
+
         if (response.trim().toLowerCase() === 'y') {
             // If the user wants to add another matrix, continue adding
             addMatrix();
@@ -123,187 +76,172 @@ function addNewMatrix() {
 
             // Display the result
             displayResult();
-
-            // Close the readline interface
-            rl.close();
         }
     }
 
     // Function to display the result
     function displayResult() {
-        console.log(`Array ID ${linearArray.id}:`);
-        console.log('Matrices:');
+        const outputContainer = document.getElementById('outputContainer');
+        outputContainer.innerHTML = `<p>Array ID ${linearArray.id}:</p>`;
+        outputContainer.innerHTML += '<p>Matrices:</p>';
         for (let i = 0; i < matrices.length; i++) {
-            console.log(`Matrix ${i + 1}:`);
+            outputContainer.innerHTML += `<p>Matrix ${i + 1}:</p>`;
             for (let row of matrices[i]) {
-                console.log(row.join('\t'));
+                outputContainer.innerHTML += `<p>${row.join('\t')}</p>`;
             }
-            console.log();
         }
 
-        console.log('Linear Array:');
-        console.log(JSON.stringify(linearArray));
+        outputContainer.innerHTML += '<p>Linear Array:</p>';
+        outputContainer.innerHTML += `<p>${JSON.stringify(linearArray)}</p>`;
     }
 
     // Start adding the first matrix
     addMatrix();
-    
 }
-
-
-
-
 function displayMatricesAndArrays() {
-    console.log("All Matrices and Linear Arrays:");
+    const outputContainer = document.getElementById('outputContainer');
+    outputContainer.innerHTML = "<p>All Matrices and Linear Arrays:</p>";
 
     matricesArray.forEach((linearArray) => {
-        console.log(`Linear Array ID ${linearArray.id}:`);
+        let htmlContent = `<div class="linear-array">`;
+        htmlContent += `<p>Linear Array ID ${linearArray.id}:</p>`;
+        htmlContent += "<div class='matrix-container'>";
 
-        // Display matrices
-        console.log("Matrices:");
         linearArray.matrices.forEach((matrix, index) => {
-            console.log(`Matrix ${index + 1}:`);
+            htmlContent += `<div class="matrix"><p>Matrix ${index + 1}:</p>`;
             matrix.forEach(row => {
-                console.log(row.join('\t'));
+                htmlContent += `<p>${row.join('\t')}</p>`;
             });
-          
-            console.log(); // Add a new line for better separation
+            htmlContent += '</div>';
         });
-          // show respec linear array
-          console.log('Array Format:');
-          const linearArrayCopy = {
+
+        htmlContent += '<p>Array Format:</p>';
+        const linearArrayCopy = {
             id: linearArray.id,
             matrices: linearArray.matrices.map(matrix => matrix.map(row => [...row]))
         };
-          console.log(JSON.stringify(linearArrayCopy).replace(/\n|\r/g, ''));
-    
+        htmlContent += `<p>${JSON.stringify(linearArrayCopy).replace(/\n|\r/g, '')}</p>`; // Array format inside the linear-array div
 
-        console.log(); // Add a new line for better separation
+        htmlContent += '</div>'; // Close the matrix-container div
+        htmlContent += '</div>'; // Close the linear-array div
+
+        outputContainer.innerHTML += htmlContent;
     });
 
-    create2DMatrix();
+    // No need to add '</div>' here, it's added inside the loop
+
 }
 
-
-
 function showAllLinearArrays() {
-    console.log("All Linear Arrays:");
+    const outputContainer = document.getElementById('outputContainer');
+    outputContainer.innerHTML = "<p>All Linear Arrays:</p>";
 
     matricesArray.forEach((linearArray) => {
-        console.log(`Linear Array ID ${linearArray.id}:`);
+        const linearArrayDiv = document.createElement('div');
+        linearArrayDiv.classList.add('linear-array');
+        linearArrayDiv.innerHTML = `<p>Linear Array ID ${linearArray.id}:</p>`;
 
         const linearArrayCopy = {
             id: linearArray.id,
             matrices: linearArray.matrices.map(matrix => matrix.map(row => [...row]))
         };
 
-        console.log('Array Format:');
-        console.log(JSON.stringify(linearArrayCopy, null, 2).replace(/\n|\r/g, ''));
+        const arrayFormatDiv = document.createElement('div');
+        arrayFormatDiv.innerHTML = '<p>Array Format:</p>';
+        const preElement = document.createElement('pre');
+        preElement.textContent = JSON.stringify(linearArrayCopy, null, 2).replace(/\n|/g, '');
+        arrayFormatDiv.appendChild(preElement);
 
-        console.log(); // Add a new line for better separation
+        linearArrayDiv.appendChild(arrayFormatDiv);
+        outputContainer.appendChild(linearArrayDiv);
     });
-
-    create2DMatrix();
 }
 
-
-
-
-
-
 function selectIndividualArray() {
-    rl.question('Enter the linear array ID to view: ', (id) => {
-        id = parseInt(id);
-        const matrixObj = matricesArray.find(obj => obj.id === id);
-        if (matrixObj) {
-            console.log(`Linear Array ID: ${matrixObj.id}`);
-            console.log("Matrices:");
-            matrixObj.matrices.forEach((matrix, index) => {
-                console.log(`Matrix ${index + 1}:`);
-                matrix.forEach(row => {
-                    console.log(row.join('\t'));
-                    // show respective linear array
-  
-                });
-                console.log(); 
-                // Add a new line for better separation
+    const id = parseInt(prompt('Enter the linear array ID to view:'));
+    const matrixObj = matricesArray.find(obj => obj.id === id);
+
+    if (matrixObj) {
+        const linearArrayDiv = document.createElement('div');
+        linearArrayDiv.classList.add('linear-array');
+        linearArrayDiv.innerHTML = `<p>Linear Array ID: ${matrixObj.id}</p><p>Matrices:</p>`;
+
+        matrixObj.matrices.forEach((matrix, index) => {
+            const matrixDiv = document.createElement('div');
+            matrixDiv.classList.add('matrix');
+            matrixDiv.innerHTML = `<p>Matrix ${index + 1}:</p>`;
+
+            matrix.forEach(row => {
+                const rowElement = document.createElement('p');
+                rowElement.textContent = row.join('\t');
+                matrixDiv.appendChild(rowElement);
             });
-        } else {
-            console.log('Linear Array not found. Please enter a valid linear array ID.');
-        }
-        // show the resp id linear array
-        console.log('Array Format:');
+
+            linearArrayDiv.appendChild(matrixDiv);
+        });
+
+        const arrayFormatDiv = document.createElement('div');
+        arrayFormatDiv.innerHTML = '<p>Array Format:</p>';
+        const preElement = document.createElement('pre');
         const matrixObjCopy = {
             id: matrixObj.id,
             matrices: matrixObj.matrices.map(matrix => matrix.map(row => [...row]))
         };
-        console.log(JSON.stringify(matrixObjCopy, null, 2).replace(/\n|\r/g, ''));
-        console.log(); // Add a new line for better separation
+        preElement.textContent = JSON.stringify(matrixObjCopy, null, 2).replace(/\n|\r/g, '');
+        arrayFormatDiv.appendChild(preElement);
 
-        create2DMatrix();
-    });
+        linearArrayDiv.appendChild(arrayFormatDiv);
+        outputContainer.innerHTML = ''; // Clear previous content
+        outputContainer.appendChild(linearArrayDiv);
+    } else {
+        outputContainer.innerHTML = '<p>Linear Array not found. Please enter a valid linear array ID.</p>';
+    }
 }
 
-function addMatrixToLinearArray() {
-    rl.question('Enter the linear array ID to which you want to add a matrix: ', (id) => {
-        id = parseInt(id);
+    function addMatrixToLinearArray() {
+        const id = parseInt(prompt('Enter the linear array ID to which you want to add a matrix:'));
         const targetArray = matricesArray.find(obj => obj.id === id);
 
         if (targetArray) {
-            // Array found, now ask for the elements of the new matrix
             let matrix = [[0, 0], [0, 0]];
 
-            // Reuse the askForElement function
             function askForElement(i, j) {
-                rl.question(`Enter element at position (${i + 1}, ${j + 1}): `, (answer) => {
-                    try {
-                        const element = parseInt(answer.trim());
-                        if (!isNaN(element)) {
-                            matrix[i][j] = element;
-
-                            if (j < 1) {
-                                askForElement(i, j + 1);
-                            } else if (i < 1) {
-                                askForElement(i + 1, 0);
-                            } else {
-                                // Add the new matrix to the specified array
-                                targetArray.matrices.push([...matrix]);
-
-                                console.log(`Matrix added to linear array ID ${id} successfully!`);
-                                create2DMatrix();
-                            }
+                const answer = prompt(`Enter element at position (${i + 1}, ${j + 1}):`);
+                try {
+                    const element = parseInt(answer.trim());
+                    if (!isNaN(element)) {
+                        matrix[i][j] = element;
+                        if (j < 1) {
+                            askForElement(i, j + 1);
+                        } else if (i < 1) {
+                            askForElement(i + 1, 0);
                         } else {
-                            console.log("Invalid input. Please enter a valid number.");
-                            askForElement(i, j);
+                            targetArray.matrices.push([...matrix]);
+                            alert(`Matrix added to linear array ID ${id} successfully!`);
                         }
-                    } catch (error) {
-                        console.log("Error parsing input. Please enter a valid number.");
+                    } else {
+                        alert("Invalid input. Please enter a valid number.");
                         askForElement(i, j);
                     }
-                });
+                } catch (error) {
+                    alert("Error parsing input. Please enter a valid number.");
+                    askForElement(i, j);
+                }
             }
 
-            // Start asking for elements
             askForElement(0, 0);
         } else {
-            console.log('Linear Array not found. Please enter a valid linear array ID.');
-            create2DMatrix();
+            alert('Linear Array not found. Please enter a valid linear array ID.');
         }
-    });
-}
+    }
 
-function searchElement() {
-
-    rl.question('Enter a number to search: ', (searchNumber) => {
-        searchNumber = parseInt(searchNumber);
+    function searchElement() {
+        const searchNumber = parseInt(prompt('Enter a number to search:'));
 
         if (!isNaN(searchNumber)) {
-            // Retrieve matricesArray from local storage
-            const matricesArray = localStorage.getItem('matricesArray') ? JSON.parse(localStorage.getItem('matricesArray')) : [];
-
             let found = false;
+            let outputHTML = '';
 
-            // Search every matrix in every linear array
             matricesArray.forEach((linearArray) => {
                 const matrixArray = linearArray.matrices;
                 let linearArrayPosition = 0;
@@ -312,26 +250,18 @@ function searchElement() {
                     matrix.forEach((row, rowIndex) => {
                         row.forEach((element, colIndex) => {
                             if (element === searchNumber) {
-                                // Calculate linear array position
                                 linearArrayPosition = (matrixIndex * matrix.length + rowIndex) * row.length + colIndex + 1;
-
-                               
-                                // Display the searched element in the matrix
-                                console.log(`Matrix ${matrixIndex + 1}:`);
+                                outputHTML += `<div class="matrix"><p>Matrix ${matrixIndex + 1}:</p>`;
                                 matrix.forEach(row => {
-                                    console.log(row.join('\t'));
+                                    outputHTML += `<p>${row.join('\t')}</p>`;
                                 });
-                                console.log(); // Add a new line for better separation
-                                console.log('Array Format:');
+                                outputHTML += '<p>Array Format:</p>';
                                 const linearArrayCopy = {
                                     id: linearArray.id,
                                     matrices: linearArray.matrices.map(matrix => matrix.map(row => [...row]))
                                 };
-                                console.log(JSON.stringify(linearArrayCopy).replace(/\n|\r/g, ''));
-                                // Display the position in linear array
-                                console.log(`Position in Linear Array: Linear Array ID ${linearArray.id}, Matrix ${matrixIndex + 1}, Element Index: ${linearArrayPosition}.`);
-                                console.log(); // Add a new line for better separation
-                               
+                                outputHTML += `<p>${JSON.stringify(linearArrayCopy).replace(/\n|\r/g, '')}</p>`;
+                                outputHTML += `<p>Position in Linear Array: Linear Array ID ${linearArray.id}, Matrix ${matrixIndex + 1}, Element Index: ${linearArrayPosition}.</p></div>`;
                                 found = true;
                             }
                         });
@@ -339,30 +269,21 @@ function searchElement() {
                 });
             });
 
-            if (!found) {
-                console.log(`Number ${searchNumber} not found in any matrices.`);
-            }
+            outputHTML = found ? outputHTML : `<p>Number ${searchNumber} not found in any matrices.</p>`;
+            outputContainer.innerHTML = outputHTML;
         } else {
-            console.log('Invalid input. Please enter a valid number.');
+            alert('Invalid input. Please enter a valid number.');
         }
+    }
 
-        create2DMatrix();
-    });
-}
+    function saveToLocalStorage() {
+        localStorage.setItem('matricesArray', JSON.stringify(matricesArray));
+    }
 
+    const matricesArray = localStorage.getItem('matricesArray') ? JSON.parse(localStorage.getItem('matricesArray')) : [];
+    let lastUsedId = matricesArray.length > 0 ? matricesArray[matricesArray.length - 1].id : 0;
 
-
-//     console.log("Matrices:");
-//     matricesArray.forEach((matrixObj) => {
-//         const matrix = matrixObj.matrix;
-//         console.log(`Array ID ${matrixObj.id}:`);
-//         matrix.forEach(row => {
-//             console.log(row.join('\t'));
-//         });
-//         console.log(); // Add a new line for better separation
-//     });
-// }
-
-
-// Start the program
-create2DMatrix();
+    if (matricesArray.length === 0) {
+        matricesArray.push({ id: ++lastUsedId, matrices: [] });
+        saveToLocalStorage();
+    }

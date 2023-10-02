@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Operations</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+        }
+
+        button {
+            margin: 5px;
+        }
+
+        .output-container {
+            margin-top: 20px;
+        }
+
+        .matrix {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .linear-array {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="mt-4 mb-4">Matrix Operations</h1>
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <button class="btn btn-primary" onclick="addNewMatrix()">Add a New Matrix</button>
+            <button class="btn btn-secondary" onclick="displayMatricesAndArrays()">Show All Matrices and Linear Arrays</button>
+            <button class="btn btn-info" onclick="showAllLinearArrays()">Show All Linear Arrays</button>
+            <button class="btn btn-success" onclick="selectIndividualArray()">Show Individual Array</button>
+            <button class="btn btn-warning" onclick="addMatrixToLinearArray()">Add Matrices to a Specified Array</button>
+            <button class="btn btn-danger" onclick="searchElement()">Search Matrices</button>
+        </div>
+    </div>
+
+    <div class="output-container" id="outputContainer"></div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="array.js"></script>
+
+
+</body>
+</html>
